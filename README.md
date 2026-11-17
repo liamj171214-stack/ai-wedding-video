@@ -19,6 +19,10 @@
 
 素材与导演方法参考 Seedance 2.5 官方指南；项目试拍实际使用 Flow、Grok、ImageGen 和 MiniMax，后期使用 FFmpeg 或 Remotion。
 
+## 开发计划
+
+后续里程碑、任务拆分和验收标准见[开发计划](docs/roadmap.md)。
+
 ## 历史记录
 
 | 阶段 | 内容 |
