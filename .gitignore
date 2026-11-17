@@ -1,0 +1,26 @@
+# 密钥与本地配置
+.env
+.env.*
+!.env.example
+
+# 婚礼素材与产物（含个人照片，切勿提交）
+projects/*/input/
+projects/*/build/
+projects/*/output/
+*.mp4
+*.mov
+*.m4v
+*.heic
+*.HEIC
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# 系统
+.DS_Store
