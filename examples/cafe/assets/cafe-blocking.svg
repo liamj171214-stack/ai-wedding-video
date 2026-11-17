@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620">
+  <rect width="920" height="620" fill="#f5f0e7"/>
+  <g font-family="PingFang SC, sans-serif" fill="#27343a">
+    <text x="56" y="56" font-size="30" font-weight="bold">C01 书店咖啡角 · 机位与视线</text>
+    <text x="56" y="85" font-size="16">导演调度草图 · 三台机位均位于人物轴线下方</text>
+    <rect x="128" y="116" width="665" height="414" rx="8" fill="#fcfaf3" stroke="#817b70" stroke-width="3"/>
+    <rect x="240" y="128" width="384" height="43" fill="#b88b63"/>
+    <text x="400" y="156" font-size="18">书架</text>
+    <path d="M129 198v130" stroke="#70a5ac" stroke-width="9"/>
+    <text x="76" y="263" font-size="18">左窗</text>
+    <path d="M790 154v83M793 237q-76 0-76-83h76" fill="none" stroke="#b88b63" stroke-width="3"/>
+    <text x="808" y="200" font-size="18">右门</text>
+    <rect x="352" y="248" width="216" height="107" rx="18" fill="#d5bc96"/>
+    <text x="444" y="335" font-size="18">桌</text>
+    <path d="M201 281h518" stroke="#82797a" stroke-width="2" stroke-dasharray="8 6"/>
+    <circle cx="302" cy="281" r="19" fill="#304c6b"/>
+    <circle cx="618" cy="281" r="19" fill="#c39d77"/>
+    <text x="247" y="240" font-size="18">周远 · 男左</text>
+    <text x="568" y="240" font-size="18">林夏 · 女右</text>
+    <circle cx="397" cy="281" r="10" fill="#353b3c"/><circle cx="523" cy="281" r="10" fill="#353b3c"/>
+    <g stroke="#548477" stroke-width="2" fill="none">
+      <path d="M460 463L460 302"/>
+      <path d="M668 433L316 289"/>
+      <path d="M251 433L604 289"/>
+    </g>
+    <g fill="#426d64"><circle cx="460" cy="463" r="11"/><circle cx="668" cy="433" r="11"/><circle cx="251" cy="433" r="11"/></g>
+    <g font-size="18"><text x="404" y="501">A 双人中景</text><text x="610" y="472">B 女肩后拍男方</text><text x="167" y="472">C 男肩后拍女方</text></g>
+    <text x="56" y="575" font-size="16">杯位：男方将他的黑杯推向女方；下一镜需保持两只杯子的落点。</text>
+  </g>
+</svg>
