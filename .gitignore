@@ -24,3 +24,11 @@ node_modules/
 
 # 系统
 .DS_Store
+
+# 本地原片、导出和模型运行文件
+/input/
+/output/
+/work/
+*.wav
+*.mp3
+*.log
