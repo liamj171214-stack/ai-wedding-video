@@ -6,7 +6,7 @@
 
 [咖啡馆三个机位](examples/cafe/README.md)展示角色四视图、独立空场、导演机位图、同框和两张过肩参考。下方动图节选自换机位试拍，展示切镜效果。
 
-![咖啡馆正反打](examples/cafe/camera-preview.gif)
+![咖啡馆正反打](examples/cafe/camera-preview.webp)
 
 ## 制作方法
 
