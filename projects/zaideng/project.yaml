@@ -1,0 +1,36 @@
+schema_version: 1
+slug: zaideng
+title: 再等一班
+fps: 24
+resolution: "1920x1080"
+assets:
+  lin:
+    path: examples/cafe/assets/lin.jpg
+    kind: character
+    version: 1
+    sha256: "50830b2ca2eae82d291ab60df129bfb49508d8aa2ca2f2c9e79ebf564aa067f8"
+  zhou:
+    path: examples/cafe/assets/zhou.jpg
+    kind: character
+    version: 1
+    sha256: "b591b0e02f50f5101f65056c4cdc646f689d04d5e18e943d4211542beed560a4"
+  cafe:
+    path: examples/cafe/assets/cafe.jpg
+    kind: set
+    version: 1
+    sha256: "e18349a709a52f2eb9c90724e0f93fb080a97c03b04c04ef74cedd6cf464c22f"
+  shot-A:
+    path: examples/cafe/assets/shot-A.jpg
+    kind: framing
+    version: 1
+    sha256: "a22c53948640cf3d444ec8bbe2c6c092ded765d2b7a4cd7f028ec9a7966b9b31"
+  shot-B:
+    path: examples/cafe/assets/shot-B.jpg
+    kind: framing
+    version: 1
+    sha256: "8b882204e6c1a22814087fae2f53e76185f9f73e5df2d2860af45c57307b8d04"
+  shot-C:
+    path: examples/cafe/assets/shot-C.jpg
+    kind: framing
+    version: 1
+    sha256: "bf12e7907e6e8b9419199ba6b81d782e8331e033ed6ead2d3577cf2b375d8a12"

@@ -27,7 +27,7 @@
 |---|---|---|---|
 | D1 | 项目定位：给真实新人做的婚礼短视频，还是虚构微电影的方法验证 | 先做虚构《再等一班》验证方法，真实新人版放到 M5 | M5 是否启动，README 标题和简介 |
 | D2 | 音频和原片怎么保存 | 继续忽略 `*.wav`、`*.mp3`、`*.mp4`。原片留在本地，清单记录 sha256。需要共享时用 GitHub Release 附件 | T2.1 的 `file` / `sha256` 字段，T2.5 的大文件检查 |
-| D3 | `lin.png`、`zhou.png` 能不能认出最初 Pexels 参考图里的真人 | v5 四视图来自 v4 文本生成的虚构角色，v1–v3 曾用 Pexels 人物参考。先记录来源链与人工核对，再决定是否重做（T1.0） | M1 资产是否重做 |
+| D3 | `lin.jpg`、`zhou.jpg` 能不能认出最初 Pexels 参考图里的真人 | v5 四视图来自 v4 文本生成的虚构角色，v1–v3 曾用 Pexels 人物参考。先记录来源链与人工核对，再决定是否重做（T1.0） | M1 资产是否重做 |
 | D4 | 主生成引擎 | 先用已有权限的 Flow，Grok 作可选对照。素材与分镜方法参考 Seedance 2.5；实际调用 Seedance 待用户另行选择 | T1.2 的候选来源 |
 
 ## M1 咖啡馆 15 秒场次审片通过
@@ -56,11 +56,11 @@
 
 依赖：无。
 
-新增 `projects/zaideng/`，结构如下：
+新增 `projects/zaideng/`，结构如下（`project.yaml` 与 `shots.yaml` 统一采用标准 YAML 写法，工具脚本统一用 `PyYAML` `safe_load` 读取；`prompts/`、`reviews/` 在 T1.1 与首次审片落盘时按需创建，Git 不保存空目录）：
 
 ```
 projects/zaideng/
-  project.yaml      # 入库：片名、分辨率、帧率、资产表
+  project.yaml      # 入库：清单版本、片名、分辨率、帧率、资产表及 sha256
   shots.yaml        # 入库：场次与镜头
   prompts/          # 入库：每镜提示词
   reviews/          # 入库：审片记录
@@ -70,28 +70,31 @@ projects/zaideng/
 `project.yaml` 示例：
 
 ```yaml
+schema_version: 1
 slug: zaideng
 title: 再等一班
 fps: 24
-resolution: 1920x1080
+resolution: "1920x1080"
 assets:
-  lin:    {path: examples/cafe/assets/lin.png,    kind: character, version: 1}
-  zhou:   {path: examples/cafe/assets/zhou.png,   kind: character, version: 1}
-  cafe:   {path: examples/cafe/assets/cafe.png,   kind: set,       version: 1}
-  shot-A: {path: examples/cafe/assets/shot-A.png, kind: framing,   version: 1}
-  shot-B: {path: examples/cafe/assets/shot-B.png, kind: framing,   version: 1}
-  shot-C: {path: examples/cafe/assets/shot-C.png, kind: framing,   version: 1}
+  lin:    {path: examples/cafe/assets/lin.jpg,    kind: character, version: 1, sha256: "<hex>"}
+  zhou:   {path: examples/cafe/assets/zhou.jpg,   kind: character, version: 1, sha256: "<hex>"}
+  cafe:   {path: examples/cafe/assets/cafe.jpg,   kind: set,       version: 1, sha256: "<hex>"}
+  shot-A: {path: examples/cafe/assets/shot-A.jpg, kind: framing,   version: 1, sha256: "<hex>"}
+  shot-B: {path: examples/cafe/assets/shot-B.jpg, kind: framing,   version: 1, sha256: "<hex>"}
+  shot-C: {path: examples/cafe/assets/shot-C.jpg, kind: framing,   version: 1, sha256: "<hex>"}
 ```
 
 `shots.yaml` 示例。镜号沿用导演稿的 01–24，同一镜拆出的机位加字母后缀：
 
 ```yaml
+schema_version: 1
 shots:
   - id: "15a"
     scene: 次日咖啡角
     camera: A
     target_duration: 2.0
     action: 周远推茶，林夏顺着杯子看过去
+    sound: 咖啡角安静室内底声，木桌推杯轻响   # 可选：环境底声与动作拟音要求
     dialogue: []
     refs: [lin, zhou, cafe, shot-A]
     kind: performance          # performance | insert（有叙事作用的图片短插入）
@@ -102,7 +105,7 @@ shots:
         file: input/15a/c1.mp4  # 相对项目目录，本地文件
         sha256: "<hex>"
         note: 杯子推过中线后位置跳变
-    selected: null             # approved 时必填：{candidate: c1, in: 0.4, out: 2.5, audio: source}
+    selected: null             # approved 时必填：{candidate: c1, in: 0.4, out: 2.5, audio: source, review: reviews/20261118-15a-15d.md}
   - id: "15b"
     camera: B
     dialogue:
@@ -113,6 +116,9 @@ shots:
 
 字段规则：
 
+- `project.yaml` 与 `shots.yaml` 顶层均声明 `schema_version: 1`；`assets` 每项记录相对仓库根目录的 `path`、`kind`、`version` 和文件 `sha256`。
+- `sound` 为可选字符串字段，说明该镜的环境底声与动作拟音要求，供 T1.1 编写提示词与审片核对。
+- `selected` 在镜头 `status: approved` 时必填，包含 `candidate`、`in`、`out`、`audio`、`review`；其中 `review` 为相对项目目录的审片记录路径（位于 `reviews/` 下）。
 - `audio` 取值为 `source`（保留原声，默认）、`replace:<file>` 或 `mute`。选 `replace` 和 `mute` 时需要在 `note` 里写原因。
 - `kind: insert` 的镜头可以用图片，但必须在 `note` 写清叙事作用，时长不超过 3 秒。
 - `at` 是台词相对选用片段入点的秒数，增加 `end` 记录台词结束秒数。校验 `0 <= at < end <= out-in`；字幕加上该镜成片起始时间。
@@ -125,11 +131,11 @@ shots:
 
 用法：`python tools/validate.py projects/zaideng [--check-media]`
 
-检查项：
+统一使用 `PyYAML`（`yaml.safe_load`）读取清单与审片记录 frontmatter。检查项：
 
-- 字段齐全、取值合法、镜号唯一。
-- `refs` 引用的资产在 `project.yaml` 里存在，资产文件在仓库里存在。
-- `approved` 镜头必须有 `selected`，`selected.candidate` 指向的候选存在，`in < out`。
+- `schema_version` 合法、字段齐全、取值合法、镜号唯一。
+- `refs` 引用的资产在 `project.yaml` 里存在，资产文件在仓库里存在且实际 sha256 与 `project.yaml` 一致。
+- `approved` 镜头必须有 `selected`，`selected.candidate` 指向的候选存在，`in < out`；`selected.review` 指向项目 `reviews/` 下已存在的审片记录，其顶部 YAML frontmatter 含人工 `reviewer`（非空，拒绝模板占位符及 agent/bot/ai 等自动代理名）、有效日期 `reviewed_at`，且 `decisions[<shot_id>]` 中 `candidate` 与 `selected.candidate` 一致、`status` 为 `approved`。
 - `performance` 镜头选用的候选必须是视频文件（`.mp4`、`.mov`）。
 - 有台词的镜头必须写 `listener`（独白镜头写 `none`）。
 - 加 `--check-media` 时，检查本地候选文件是否存在、sha256 是否一致。显式启用此参数时，缺选用文件、哈希不符都报错。CI 不加该参数，只校验清单。正式剪辑强制媒体检查，并核对裁切不超源时长，有对白且保留原声时必须有音轨。
@@ -162,11 +168,12 @@ shots:
 
 新增 `docs/templates/review.md`，审片记录存到 `projects/<slug>/reviews/<YYYYMMDD>-<范围>.md`。模板包含：
 
-- 审片对象（成片文件名、`edl.json` 对应的提交号）。
-- 开声检查：台词归属、口型、停顿、倾听反应、音色连续、环境声是否服从画面。
+- 顶部 YAML frontmatter：记录 `schema_version`、人工 `reviewer`（必须是人）、审片日期 `reviewed_at`、成片与 EDL 路径及 sha256、`manifest_commit`，以及 `decisions`（按镜号记录 `{candidate, status}`，`status` 取 `pending` 待审 / `approved` 通过 / `reshoot` 补拍 / `reselect` 换候选，供 `validate.py` 自动核验）。
+- 审片对象（成片文件名与 sha256、`edl.json` 路径与 sha256、清单提交号）。
+- 开声检查：台词归属、口型、停顿、倾听反应、音色连续、环境声与拟音是否服从画面。
 - 静音检查：动作因果、视线、站位、道具状态、服装与脸的一致性。
-- 逐镜结论表：镜号、结论（通过 / 补拍 / 换候选）、时间点、问题。
-- 审片人（必须是人）。
+- 逐镜结论表：镜号、候选、成片时间点、结论（`approved` / `reshoot` / `reselect`）、问题与依据。
+- 人工结论说明：人工确认后方可把 `shots.yaml` 对应镜头更新为 `approved` 并写入 `selected.review`。
 
 ### T2.5 CI
 
