@@ -21,7 +21,7 @@
 
 ## 开发计划
 
-后续里程碑、任务拆分和验收标准见[开发计划](docs/roadmap.md)。
+后续里程碑、任务拆分和验收标准见[开发计划](docs/roadmap.md)。当前主线是[底座能力方案](docs/platform-plan.md)。
 
 ## 历史记录
 
