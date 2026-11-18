@@ -121,7 +121,7 @@ shots:
 - `selected` 在镜头 `status: approved` 时必填，包含 `candidate`、`in`、`out`、`audio`、`review`；其中 `review` 为相对项目目录的审片记录路径（位于 `reviews/` 下）。
 - `audio` 取值为 `source`（保留原声，默认）、`replace:<file>` 或 `mute`。选 `replace` 和 `mute` 时需要在 `note` 里写原因。
 - `kind: insert` 的镜头可以用图片，但必须在 `note` 写清叙事作用，时长不超过 3 秒。
-- `at` 是台词相对选用片段入点的秒数，增加 `end` 记录台词结束秒数。校验 `0 <= at < end <= out-in`；字幕加上该镜成片起始时间。
+- `at` 是台词相对选用片段入点的秒数，增加 `end` 记录台词结束秒数。已设置 `selected` 时校验 `0 <= at < end <= out-in`，未设置 `selected`（如 `pending` / `candidate`）时校验 `0 <= at < end <= target_duration`；字幕加上该镜成片起始时间。
 
 验收：写出完整 M1 四镜（15a–15d）的 `shots.yaml`，状态为 `pending`。
 
@@ -135,9 +135,9 @@ shots:
 
 - `schema_version` 合法、字段齐全、取值合法、镜号唯一。
 - `refs` 引用的资产在 `project.yaml` 里存在，资产文件在仓库里存在且实际 sha256 与 `project.yaml` 一致。
-- `approved` 镜头必须有 `selected`，`selected.candidate` 指向的候选存在，`in < out`；`selected.review` 指向项目 `reviews/` 下已存在的审片记录，其顶部 YAML frontmatter 含人工 `reviewer`（非空，拒绝模板占位符及 agent/bot/ai 等自动代理名）、有效日期 `reviewed_at`，且 `decisions[<shot_id>]` 中 `candidate` 与 `selected.candidate` 一致、`status` 为 `approved`。
+- `approved` 镜头必须有 `selected`，`selected.candidate` 指向的候选存在，`in < out`；`selected.review` 指向项目 `reviews/` 下已存在的审片记录，其顶部 YAML frontmatter 为准并含人工 `reviewer`（非空，拒绝模板占位符及 agent/bot/ai 等自动代理名）、有效日期 `reviewed_at`，且 `decisions[<shot_id>]` 中 `candidate` 与 `selected.candidate` 一致、`status` 为 `approved`；同时核对正文中逐镜结论表已填写行与 frontmatter `decisions` 一致。
 - `performance` 镜头选用的候选必须是视频文件（`.mp4`、`.mov`）。
-- 有台词的镜头必须写 `listener`（独白镜头写 `none`）。
+- 有台词的镜头必须写 `listener`（独白镜头写 `none`）；对白时间在有 `selected` 时满足 `0 <= at < end <= out-in`，无 `selected` 时满足 `0 <= at < end <= target_duration`。
 - 加 `--check-media` 时，检查本地候选文件是否存在、sha256 是否一致。显式启用此参数时，缺选用文件、哈希不符都报错。CI 不加该参数，只校验清单。正式剪辑强制媒体检查，并核对裁切不超源时长，有对白且保留原声时必须有音轨。
 
 验收：pytest 覆盖每条规则的通过和失败两种情况。
@@ -172,14 +172,14 @@ shots:
 - 审片对象（成片文件名与 sha256、`edl.json` 路径与 sha256、清单提交号）。
 - 开声检查：台词归属、口型、停顿、倾听反应、音色连续、环境声与拟音是否服从画面。
 - 静音检查：动作因果、视线、站位、道具状态、服装与脸的一致性。
-- 逐镜结论表：镜号、候选、成片时间点、结论（`approved` / `reshoot` / `reselect`）、问题与依据。
+- 逐镜结论表：镜号、候选、成片时间点、结论（`approved` / `reshoot` / `reselect`）、问题与依据；以 frontmatter `decisions` 为权威数据源，`validate.py` 同步校验表内已填行与 frontmatter 一致。
 - 人工结论说明：人工确认后方可把 `shots.yaml` 对应镜头更新为 `approved` 并写入 `selected.review`。
 
 ### T2.5 CI
 
 依赖：T2.2、T2.3。
 
-新增 `.github/workflows/ci.yml`，在 push 和 PR 时运行：
+新增 `.github/CODEOWNERS`，将 `/projects/*/reviews/` 指定给项目负责人，配合分支保护要求改动审片记录的 PR 必须经项目负责人批准（从权限层面保障“审片人必须是人”）。同时新增 `.github/workflows/ci.yml`，在 push 和 PR 时运行：
 
 1. Markdown 相对链接检查（新增 `tools/check_links.py`，忽略 http 链接）。
 2. 对 `projects/*/` 逐个跑 `validate.py`（不加 `--check-media`）。
