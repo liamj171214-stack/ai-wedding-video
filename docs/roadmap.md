@@ -27,7 +27,7 @@
 |---|---|---|---|
 | D1 | 项目定位：给真实新人做的婚礼短视频，还是虚构微电影的方法验证 | 先做虚构《再等一班》验证方法，真实新人版放到 M5 | M5 是否启动，README 标题和简介 |
 | D2 | 音频和原片怎么保存 | 继续忽略 `*.wav`、`*.mp3`、`*.mp4`。原片留在本地，清单记录 sha256。需要共享时用 GitHub Release 附件 | T2.1 的 `file` / `sha256` 字段，T2.5 的大文件检查 |
-| D3 | `lin.png`、`zhou.png` 能不能认出最初 Pexels 参考图里的真人 | v5 四视图来自 v4 文本生成的虚构角色，v1–v3 曾用 Pexels 人物参考。先记录来源链与人工核对，再决定是否重做（T1.0） | M1 资产是否重做 |
+| D3 | `lin.jpg`、`zhou.jpg` 能不能认出最初 Pexels 参考图里的真人 | v5 四视图来自 v4 文本生成的虚构角色，v1–v3 曾用 Pexels 人物参考。先记录来源链与人工核对，再决定是否重做（T1.0） | M1 资产是否重做 |
 | D4 | 主生成引擎 | 先用已有权限的 Flow，Grok 作可选对照。素材与分镜方法参考 Seedance 2.5；实际调用 Seedance 待用户另行选择 | T1.2 的候选来源 |
 
 ## M1 咖啡馆 15 秒场次审片通过
@@ -75,12 +75,12 @@ title: 再等一班
 fps: 24
 resolution: 1920x1080
 assets:
-  lin:    {path: examples/cafe/assets/lin.png,    kind: character, version: 1}
-  zhou:   {path: examples/cafe/assets/zhou.png,   kind: character, version: 1}
-  cafe:   {path: examples/cafe/assets/cafe.png,   kind: set,       version: 1}
-  shot-A: {path: examples/cafe/assets/shot-A.png, kind: framing,   version: 1}
-  shot-B: {path: examples/cafe/assets/shot-B.png, kind: framing,   version: 1}
-  shot-C: {path: examples/cafe/assets/shot-C.png, kind: framing,   version: 1}
+  lin:    {path: examples/cafe/assets/lin.jpg,    kind: character, version: 1}
+  zhou:   {path: examples/cafe/assets/zhou.jpg,   kind: character, version: 1}
+  cafe:   {path: examples/cafe/assets/cafe.jpg,   kind: set,       version: 1}
+  shot-A: {path: examples/cafe/assets/shot-A.jpg, kind: framing,   version: 1}
+  shot-B: {path: examples/cafe/assets/shot-B.jpg, kind: framing,   version: 1}
+  shot-C: {path: examples/cafe/assets/shot-C.jpg, kind: framing,   version: 1}
 ```
 
 `shots.yaml` 示例。镜号沿用导演稿的 01–24，同一镜拆出的机位加字母后缀：
