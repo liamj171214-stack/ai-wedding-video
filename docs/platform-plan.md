@@ -43,7 +43,7 @@
 
 依赖：无。由当前执行 agent 继续完成。
 
-- PR #8 按审核意见修改：审片结论绑定候选 `sha256` 与 `in`/`out`；`--check-media` 只强制检查选中候选；静音或换音原因只认 `selected.note` 或镜头 `note`。
+- PR #8 按审核意见修改：审片结论绑定候选 `sha256` 与 `in`/`out`；`--check-media` 只强制检查选中候选；静音或换音原因只认 `selected.note` 或镜头 `note`。同步更新审片模板，以及 roadmap 中 T2.2、T2.4 的规则文字（目前仍写着只比对候选编号）。
 - PR #9 修改同日覆盖问题，同步 #8 后合并。
 - roadmap T2.5：CI（链接检查、清单校验、大文件拦截、pytest）和 `CODEOWNERS`。分支保护由用户在仓库设置中开启，或授权 agent 设置。
 
@@ -51,11 +51,11 @@
 
 ### B1 清单格式 v2：可见事实与状态链（第一优先）
 
-依赖：B0。这是第一块要做的，它能直接发现“拿铁写成茶”“握杯写成搭手”这类问题。
+依赖：B0、B6a。这是第一块功能，它能直接发现“拿铁写成茶”“握杯写成搭手”这类问题。
 
 **1. 资产可见事实**
 
-`project.yaml` 的每个资产增加 `facts`，记录这张图里看得见、后续镜头必须保持的东西。每条事实由人确认：
+`project.yaml` 的每个资产增加 `facts`，记录这张图里看得见、后续镜头必须保持的东西。事实分两部分：给人读、给提示词检查用的文字条目 `items`，以及给状态链比对用的结构化 `state`（与下文镜头状态链用同一套词表，工具只比对结构化字段，不解析自由文字）。每份事实由人确认：
 
 ```yaml
 assets:
@@ -65,31 +65,44 @@ assets:
     version: 1
     sha256: "<hex>"
     facts:
-      confirmed_by: "<人名>"        # 必须是人；留空表示未确认
+      asset_sha256: "<确认时的图片 sha256>"  # 与上面的 sha256 不一致即视为未确认
+      confirmed_by: "<GitHub 账号名>"        # 必须是人；留空表示未确认
       confirmed_at: "2026-11-18"
+      scene: cafe-next-day                   # 结构化 state 使用该场次的词表
+      state:
+        props: {cups: [zhou-front, lin-front], tickets: center}
+        hands: {zhou: holding-cup}
       items:
         - id: cups
           text: 两只哑光黑陶瓷杯，杯中是带拉花的拿铁
-          terms: {required: [拿铁], conflicting: [茶, 热茶, 茶杯]}
+          terms:
+            zh: {required: [拿铁], conflicting: [热茶, 茶杯]}
+            en: {required: [latte], conflicting: [tea]}
         - id: zhou-right-hand
           text: 周远右手握着面前的杯子
-          terms: {required: [握], conflicting: [搭在杯旁]}
+          terms:
+            zh: {conflicting: [搭在杯旁]}
         - id: tickets
           text: 两张浅米黄纸车票并排放在桌中央
 ```
 
-- `terms` 是可选的词表，用于 B2 的提示词检查：生成的提示词必须包含 `required` 中的词，不能出现 `conflicting` 中的词。
+- `terms` 是可选的词表，按提示词语言分组（`zh`、`en`），用于 B2 的提示词检查：生成的提示词必须包含 `required` 中的词，不能出现 `conflicting` 中的词。
+- 匹配规则：在生成的提示词正文中做子串匹配，英文不区分大小写。中文没有词边界，词表应写成足够具体的短语（如“热茶”而不是“茶”），命中时报告所在句子，便于人判断。
 - 事实可以由 B5 的视觉问答起草，但 `confirmed_by` 只能由人填写。未确认的事实在校验时报警告，B2 生成提示词时拒绝使用。
-- 资产文件的 sha256 变化后，事实自动视为未确认。
+- 资产文件的 sha256 与 `facts.asset_sha256` 不一致时，事实视为未确认。
+- 人物资产（`kind: character`）的事实中增加来源记录 `provenance`：生成工具、生成时引用过的素材、是否涉及真人照片。这一项落实 D3“先记录来源链与人工核对”，由用户确认时一并核对。
 
-**2. 场次道具与逐镜状态链**
+**2. 场次词表、道具与逐镜状态链**
 
-`shots.yaml` 增加场次级道具表，以及每镜的起止状态：
+`shots.yaml` 增加场次表。场次用英文 id，中文名放 `title`；位置和手部状态用场次内登记的词表，状态链只能使用词表中的值：
 
 ```yaml
 schema_version: 2
 scenes:
   cafe-next-day:
+    title: 次日咖啡角
+    positions: [center, zhou-front, lin-front]
+    hand_states: [on-table, holding-cup, pushing]
     props:
       cups:    {count: 2, desc: 哑光黑陶瓷杯，拿铁}
       tickets: {count: 2, desc: 浅米黄纸车票}
@@ -97,25 +110,34 @@ shots:
   - id: "15a"
     scene: cafe-next-day
     start_state:
-      from_framing: shot-A           # 起始状态默认取机位图的可见事实
+      from_framing: shot-A           # 必须与该机位图事实的 state 一致
       props: {tickets: center, cups: [zhou-front, lin-front]}
-      hands: {zhou: 双手放在桌上}
+      hands: {zhou: on-table, lin: on-table}
     changes:
-      - {prop: tickets, from: center, to: lin-front, by: zhou}
+      - {prop: tickets, to: lin-front, by: zhou}
+      - {hand: zhou, to: on-table}
     end_state:
       props: {tickets: lin-front, cups: [zhou-front, lin-front]}
+      hands: {zhou: on-table, lin: on-table}
 ```
 
 校验规则：
 
-- 每镜 `end_state` = `start_state` 加上 `changes` 后的结果，不一致即报错。
-- 同一场次中，下一镜的 `start_state` 必须等于上一镜的 `end_state`（机位变化不影响道具位置）。
-- 道具数量不能超出场次道具表；`changes` 只能引用场次里已登记的道具。
-- 如果 `start_state.from_framing` 指向的机位图事实与状态冲突（例如事实写“周远右手握杯”，状态写“双手放在桌上”），报错。
+- 每镜 `end_state` = `start_state` 依次应用 `changes` 后的结果，不一致即报错。
+- 同一场次中，下一镜的 `start_state` 必须等于上一镜的 `end_state`（机位变化不影响道具和手的状态）。
+- `start_state.from_framing` 指向的机位图若有已确认事实，`start_state` 中与事实 `state` 重叠的字段必须一致。例如 shot-B 事实写 `hands.zhou: holding-cup`，15b 的起始状态写 `on-table` 即报错。
+- 道具数量不能超出场次道具表；位置和手部状态必须在场次词表内；`changes` 只能引用已登记的道具和角色。
 
-这样，15a 想表达的“推给她”必须写成具体的状态变化，和机位图对不上时会直接报出来，不再到审片才发现。
+这样，15a 想表达的“推给她”必须写成具体的状态变化，和下一镜机位图的事实对不上时会直接报出来，不再到审片才发现。
 
-**3. 格式升级**
+**3. 本地资产**
+
+D2 规定音视频不入库，但试音、表演参考等资产仍要被镜头引用（B5 的说话人比对需要角色试音）。资产增加 `storage` 字段：
+
+- `storage: repo`（默认）：`path` 相对仓库根目录，校验器检查文件存在和 sha256。
+- `storage: local`：`path` 相对项目目录且必须位于 `input/` 下；平时只检查格式，`--check-media` 时才检查文件存在和 sha256。CI 不需要这些文件。
+
+**4. 格式升级**
 
 - 新增 `schemas/project.v2.json`、`schemas/shots.v2.json`（JSON Schema），结构检查用 Schema 完成；`validate.py` 只保留跨文件引用、状态链、媒体等 Schema 做不了的检查。
 - 新增迁移命令，把 v1 清单升级为 v2（新增字段留空并标为未确认）。迁移后校验器只接受 v2，遇到 v1 时提示运行迁移命令。
@@ -123,7 +145,7 @@ shots:
 
 验收：
 
-- 合成样例覆盖：状态链断裂、道具数量超出、`changes` 推导不一致、起始状态与机位图事实冲突、资产哈希变化后事实失效、未确认事实报警告。每项都有通过和失败两种测试。
+- 合成样例覆盖：状态链断裂、道具数量超出、位置或手部状态不在词表内、`changes` 推导不一致、起始状态与机位图事实冲突、资产哈希变化后事实失效、未确认事实报警告、`storage: local` 资产在无媒体文件时通过格式检查且在 `--check-media` 下检查文件。每项都有通过和失败两种测试。
 - `projects/zaideng` 迁移后校验通过（事实未确认时只有警告）。
 
 ### B2 提示词生成与检查
@@ -136,7 +158,7 @@ shots:
 
 | 引擎 | 已有记录 | 来源 |
 |---|---|---|
-| `flow-omni-1.2-flash` | 8 秒 720p（24 点）、15 秒 1280×720（60 点）；中文双人原生对白可用；多镜生成可用；Ingredients 角色复用、Video Edit 换机位实测过一次 | 00-tool-test、04-v4、05-v5 |
+| `flow-omni-1.2-flash` | 8 秒 720p（24 点）、15 秒 1280×720（60 点）；中文双人原生对白可用；一次生成多镜可用；Video Edit 换机位实测过一次（30 点，10 秒源片）。Ingredients 角色复用、跨镜音色复用**未验证** | 00-tool-test、02-v2、04-v4、05-v5 |
 | `grok-imagine-web` | 约 8–10 秒；672×448 或 736×400；中文短句对白可用；底层模型未核实；多主体和音色锁定未验证 | 00-tool-test、04-v4 |
 | `minimax-speech-2.8-hd` | 中文 TTS 可用，32 kHz 单声道 MP3 | 00-tool-test |
 | `seedance-2.5` | 全部 `unverified`；实际调用待用户决定（D4） | 04-v4 |
@@ -146,7 +168,8 @@ shots:
 **2. 提示词生成**
 
 - 新增提示词生成命令：读取镜头清单、状态链、已确认事实和引擎档案，按模板生成每镜每引擎的提示词，写到 `projects/<slug>/prompts/generated/<shot>.<engine>.md`。
-- 文件头注明“由工具生成，勿手改”、输入清单的提交号和内容哈希。
+- 文件头注明“由工具生成，勿手改”和输入内容哈希（清单、事实、引擎档案、模板）。生成文件入库，便于评审。
+- CI 增加一致性检查：重新生成后与仓库中的文件比对，不一致（有人手改，或清单改了没重新生成）即失败。
 - 需要人工润色的部分写在镜头的 `prompt_notes` 字段里，由模板拼入，不直接改生成文件。
 - 模板参考 PR #7 的手写提示词结构：引用资产与职责、分秒动作、台词与说话人、闭口倾听方、环境声、淘汰检查项。
 
@@ -154,7 +177,7 @@ shots:
 
 生成后自动检查，任一项失败即报错：
 
-- 已确认事实的 `required` 词缺失、`conflicting` 词出现（例如事实写拿铁，提示词出现“茶”）。
+- 已确认事实的 `required` 词缺失、`conflicting` 词出现（例如事实写拿铁，提示词出现“热茶”）。按提示词语言取对应的词表。
 - 镜头目标时长超过引擎最长时长。
 - 镜头需要原生对白，但引擎档案中对白能力未验证或不支持。
 - 台词语速超出范围（按每秒字数，范围可配置），或台词时间超出镜头时长。
@@ -181,7 +204,7 @@ jobs:
     refs: {zhou: "<asset sha256>", lin: "<asset sha256>", cafe: "<asset sha256>", shot-B: "<asset sha256>"}
     params: {duration: 5, resolution: 1280x720, audio: native}
     cost: {unit: points, amount: 30}
-    submitted_by: "<人名或 agent 标识>"
+    submitted_by: "<GitHub 账号名或 agent 标识>"   # 公开仓库，不写真实姓名
     status: submitted        # submitted | downloaded | failed | cancelled
     outputs: []              # 入库后回填候选编号
     failure: null            # 失败原因，如限流、上传失败
@@ -237,14 +260,21 @@ jobs:
 
 ### B6 工程化
 
-依赖：B0。可以与 B1 并行，但不要同时改 `validate.py` 的同一部分（按规则 1 由用户授权并行）。
+分两部分。B6a 是 B1 的前置：B1 会大改校验器，先把 `validate.py` 拆开，避免两个任务同时改同一个大文件。
 
-- 统一命令入口：`python -m tools <命令>`，子命令包括 validate、migrate、prompt、pack、ingest、assemble、review、qc。
-- 拆分 `validate.py`（当前约 1200 行）：结构检查、引用与状态链、审片记录、媒体检查分模块，公共函数放 `tools/common/`。
-- 合成样例项目放 `tests/fixtures/projects/demo/`，所有工具测试共用，CI 只用它和 `projects/zaideng` 的清单。
-- 新增 `docs/pipeline.md`：一张流程图和每个命令的用法，从“写镜头清单”到“出正式版”。
+**B6a 拆分与命令入口（B0 之后、B1 之前）**
 
-验收：`python -m tools --help` 列出全部子命令；拆分后原有测试全部通过；`docs/pipeline.md` 中的命令都能在合成样例上跑通。
+- 统一命令入口：`python -m tools <命令>`。先接入现有的 validate、assemble，后续工作包往里加 migrate、prompt、pack、ingest、review、qc。
+- 拆分 `validate.py`（当前约 1200 行）：结构检查、引用检查、审片记录、媒体检查分模块，公共函数放 `tools/common/`。只做重构，不改行为。
+- 合成样例项目放 `tests/fixtures/projects/demo/`，作为一个独立的迷你仓库根目录（资产路径相对它解析），所有工具测试共用。CI 只用它和 `projects/zaideng` 的清单。
+
+验收：`python -m tools --help` 列出已接入的子命令；拆分前后全部测试通过，`projects/zaideng` 校验输出不变。
+
+**B6b 流程说明（任何时候）**
+
+- 新增 `docs/pipeline.md`：一张流程图和每个命令的用法，从“写镜头清单”到“出正式版”。每个工作包合并时同步更新。
+
+验收：`docs/pipeline.md` 中的命令都能在合成样例上跑通。
 
 ## 四、暂缓（目前没有对应的失败记录）
 
@@ -257,17 +287,18 @@ jobs:
 
 ```
 B0（#8、#9 修改合并 → T2.5 CI）
- ├─ B1 清单 v2：可见事实与状态链  ← 第一优先
- │   ├─ B2 提示词生成与检查
- │   └─ B3 生成任务与入库
- │        ├─ B4 审片工具（还需 B0）
- │        └─ B5 自动预检（还需 B1）
- └─ B6 工程化（可与 B1 并行，需用户授权）
+ └─ B6a 拆分校验器、统一命令入口、合成样例
+     └─ B1 清单 v2：可见事实与状态链  ← 第一块功能
+         ├─ B2 提示词生成与检查
+         └─ B3 生成任务与入库
+              ├─ B4 审片工具
+              └─ B5 自动预检
+B6b 流程说明：随各工作包同步更新
 ```
 
-- 第一批：B0 收尾，然后 B1。
+- 第一批：B0 收尾，然后 B6a，再 B1。这三步串行，同一时间只有一个 agent 改校验器。
 - B1 合并后：B2、B3 可以同时进行（需用户授权并行）。
-- B3 合并后：B4、B5。B5 的校准任务需要用户提供本地原片路径。
+- B3 合并后：B4、B5 可以同时进行（需用户授权并行）。B5 的校准任务需要用户提供本地原片路径。
 - B1–B3 合并、用户确认咖啡馆六张图的可见事实后，恢复 roadmap 的 T1.2–T1.4，用 B2 生成的提示词和 B3 的任务包重新生成咖啡馆四镜，验证整条底座。
 
 ## 六、需要用户参与的环节
@@ -275,7 +306,7 @@ B0（#8、#9 修改合并 → T2.5 CI）
 | 环节 | 用户要做的事 |
 |---|---|
 | B0 | 开启分支保护，或授权 agent 设置 |
-| B1 | 确认咖啡馆六张参考图的可见事实；顺带决定“拿铁还是茶”“15a 动作” |
+| B1 | 确认咖啡馆六张参考图的可见事实和两张人物图的来源记录（D3）；顺带决定“拿铁还是茶”“15a 动作” |
 | B3 | 确认是否设预算及上限 |
 | B5 | 授权付费视觉问答（如使用）；提供本地原片用于校准；决定是否把某项检查升级为硬性检查 |
 | 全程 | 审片结论；多 agent 并行的授权 |
