@@ -11,12 +11,12 @@
 
 ## 执行规则（所有 agent 遵守）
 
-1. 一个任务一个分支、一个 PR，用 squash merge。PR 描述写明对应的任务编号。
+1. 一个任务一个分支、一个 PR，通过 merge commit 保留任务历史。PR 描述写明对应的任务编号。多 agent 并行须有用户明确授权。
 2. 不提交原片、音频和生成中间件。素材放 `projects/<slug>/input|build|output/`，这几个目录已在 `.gitignore` 中忽略。仓库里只记录文件路径和 sha256。
-3. 单个提交文件不超过 1 MB。示例图用 JPG/WebP。
+3. 后续新增或修改的文件不超过 1 MB，示例图优先 JPG/WebP。现有归档 PNG/GIF 保留，修改时再压缩并更新引用。
 4. `docs/history/` 是归档，不修改，只能新增阶段记录。
 5. 审片是否通过由人决定。agent 可以准备材料、跑技术检查、写检查清单，但不能把镜头状态改成 `approved`，除非审片记录里有人工结论。
-6. 涉及生成服务账号（Flow、Grok、Seedance、MiniMax）的提交、上传、下载由用户操作，或者在用户在场时进行。agent 不保存账号链接或凭证。
+6. 已授权范围内的生成、上传、下载可由 agent 通过可用入口执行。新增费用、平台协议和真人授权按实际动作处理。用户负责最终视听审片。公开仓库不保存账号内链接或凭据。
 7. 文档用中文。代码、文件名、字段名用英文。
 
 ## M0 待决定事项（人工）
@@ -27,8 +27,8 @@
 |---|---|---|---|
 | D1 | 项目定位：给真实新人做的婚礼短视频，还是虚构微电影的方法验证 | 先做虚构《再等一班》验证方法，真实新人版放到 M5 | M5 是否启动，README 标题和简介 |
 | D2 | 音频和原片怎么保存 | 继续忽略 `*.wav`、`*.mp3`、`*.mp4`。原片留在本地，清单记录 sha256。需要共享时用 GitHub Release 附件 | T2.1 的 `file` / `sha256` 字段，T2.5 的大文件检查 |
-| D3 | `lin.jpg`、`zhou.jpg` 能不能认出最初 Pexels 参考图里的真人 | 暂时保留。如果认得出，重做四视图（新增任务 T1.0） | M1 资产是否重做 |
-| D4 | 主生成引擎 | 先用已有权限的 Flow，Seedance 2.5 作同场对照 | T1.2 的候选来源 |
+| D3 | `lin.png`、`zhou.png` 能不能认出最初 Pexels 参考图里的真人 | v5 四视图来自 v4 文本生成的虚构角色，v1–v3 曾用 Pexels 人物参考。先记录来源链与人工核对，再决定是否重做（T1.0） | M1 资产是否重做 |
+| D4 | 主生成引擎 | 先用已有权限的 Flow，Grok 作可选对照。素材与分镜方法参考 Seedance 2.5；实际调用 Seedance 待用户另行选择 | T1.2 的候选来源 |
 
 ## M1 咖啡馆 15 秒场次审片通过
 
@@ -36,8 +36,8 @@
 
 | 任务 | 内容 | 依赖 | 人工 |
 |---|---|---|---|
-| T1.1 生成提示词 | 在 `projects/zaideng/prompts/` 为四个镜头各写一份提示词，注明引用的资产、机位、动作分时、台词和说话人、闭口倾听的一方、环境声。Flow 版和 Seedance 版各一份。格式参考 [Seedance 2.5 提示词指南](https://docs.volcengine.com/docs/ark/seedance-2-5-prompt-guide?lang=zh) | T2.1 的目录约定 | 否 |
-| T1.2 生成候选 | 用户在生成服务里上传资产、提交任务、下载原片，放到 `projects/zaideng/input/<shot>/`。每个镜头至少 2 条候选 | T1.1 | 是 |
+| T1.1 生成提示词 | 在 `projects/zaideng/prompts/` 为四个镜头各写一份提示词，注明引用的资产、机位、动作分时、台词和说话人、闭口倾听的一方、环境声。Flow 版为主，按需提供 Grok 适配版；素材职责与分镜方法参考 Seedance 2.5。格式参考 [Seedance 2.5 提示词指南](https://docs.volcengine.com/docs/ark/seedance-2-5-prompt-guide?lang=zh) | T2.1 的目录约定 | 否 |
+| T1.2 生成候选 | 用户或已获授权的 agent 在生成服务里上传资产、提交任务、下载原片，放到 `projects/zaideng/input/<shot>/`。先每镜 1 条，发现具体问题后按已确认预算补候选并记录淘汰原因 | T1.1 | 是 |
 | T1.3 登记与粗剪 | 把候选登记进 `shots.yaml`，跑校验，用 `assemble.py --draft` 出粗剪，并写一份待审记录（逐镜列出时间点和需要审的问题） | T1.2，T2.2，T2.3 | 否 |
 | T1.4 审片与补拍 | 用户开声、静音各审一轮，记录结论。不通过的镜头回到 T1.2 只补那一镜 | T1.3 | 是 |
 
@@ -75,12 +75,12 @@ title: 再等一班
 fps: 24
 resolution: 1920x1080
 assets:
-  lin:    {path: examples/cafe/assets/lin.jpg,    kind: character, version: 1}
-  zhou:   {path: examples/cafe/assets/zhou.jpg,   kind: character, version: 1}
-  cafe:   {path: examples/cafe/assets/cafe.jpg,   kind: set,       version: 1}
-  shot-A: {path: examples/cafe/assets/shot-A.jpg, kind: framing,   version: 1}
-  shot-B: {path: examples/cafe/assets/shot-B.jpg, kind: framing,   version: 1}
-  shot-C: {path: examples/cafe/assets/shot-C.jpg, kind: framing,   version: 1}
+  lin:    {path: examples/cafe/assets/lin.png,    kind: character, version: 1}
+  zhou:   {path: examples/cafe/assets/zhou.png,   kind: character, version: 1}
+  cafe:   {path: examples/cafe/assets/cafe.png,   kind: set,       version: 1}
+  shot-A: {path: examples/cafe/assets/shot-A.png, kind: framing,   version: 1}
+  shot-B: {path: examples/cafe/assets/shot-B.png, kind: framing,   version: 1}
+  shot-C: {path: examples/cafe/assets/shot-C.png, kind: framing,   version: 1}
 ```
 
 `shots.yaml` 示例。镜号沿用导演稿的 01–24，同一镜拆出的机位加字母后缀：
@@ -106,7 +106,7 @@ shots:
   - id: "15b"
     camera: B
     dialogue:
-      - {speaker: zhou, at: 0.3, text: 昨天让你白等了。以后来不了，我先告诉你。}
+      - {speaker: zhou, at: 0.3, end: 4.8, text: 昨天让你白等了。以后来不了，我先告诉你。}
     listener: lin
     # 其余字段同上
 ```
@@ -115,7 +115,7 @@ shots:
 
 - `audio` 取值为 `source`（保留原声，默认）、`replace:<file>` 或 `mute`。选 `replace` 和 `mute` 时需要在 `note` 里写原因。
 - `kind: insert` 的镜头可以用图片，但必须在 `note` 写清叙事作用，时长不超过 3 秒。
-- `at` 是台词相对该镜入点的秒数，用于生成字幕。
+- `at` 是台词相对选用片段入点的秒数，增加 `end` 记录台词结束秒数。校验 `0 <= at < end <= out-in`；字幕加上该镜成片起始时间。
 
 验收：写出完整 M1 四镜（15a–15d）的 `shots.yaml`，状态为 `pending`。
 
@@ -132,7 +132,7 @@ shots:
 - `approved` 镜头必须有 `selected`，`selected.candidate` 指向的候选存在，`in < out`。
 - `performance` 镜头选用的候选必须是视频文件（`.mp4`、`.mov`）。
 - 有台词的镜头必须写 `listener`（独白镜头写 `none`）。
-- 加 `--check-media` 时，检查本地候选文件是否存在、sha256 是否一致。缺文件报告为警告，不算失败（CI 环境没有原片）。
+- 加 `--check-media` 时，检查本地候选文件是否存在、sha256 是否一致。显式启用此参数时，缺选用文件、哈希不符都报错。CI 不加该参数，只校验清单。正式剪辑强制媒体检查，并核对裁切不超源时长，有对白且保留原声时必须有音轨。
 
 验收：pytest 覆盖每条规则的通过和失败两种情况。
 
@@ -144,13 +144,13 @@ shots:
 
 行为：
 
-- 按 `shots.yaml` 的顺序取镜头，按 `in`/`out` 裁切，统一到 `project.yaml` 的分辨率和帧率。只缩放加黑边或裁切，不做时长填充（禁止 `tpad` 复制尾帧）。
+- 按 `shots.yaml` 的顺序取镜头，按 `in`/`out` 裁切，统一到 `project.yaml` 的分辨率和帧率。默认按比例缩放加黑边，裁切须在选用记录中明确。不做时长填充（禁止 `tpad` 复制尾帧）。
 - 默认保留源音轨。每个剪点的音频做 10 ms 淡入淡出，避免爆音。
 - 正式模式下，任何选中范围内的镜头不是 `approved` 就报错退出。
 - `--draft` 模式下，非 `approved` 镜头用其第一条候选；没有候选的镜头插入一张写着“缺镜 15b”的灰底提示卡，时长取 `target_duration`。提示卡必须明显，不能是内容静帧。
 - 输出：
   - `build/edl.json`：每镜的源文件、入出点、在成片中的起止时间。
-  - `build/subs.srt`：由 `dialogue` 和 `at` 生成。
+  - `build/subs.srt`：由 `dialogue`、`at`、`end` 与成片偏移生成。
   - `output/<slug>-<shots>-<YYYYMMDD>[-draft].mp4`：H.264 + AAC。
 - 结束时跑 `ffprobe` 核对分辨率、帧率、时长，并用 `ffmpeg -v error -i <out> -f null -` 完整解码，有报错则退出码非零。
 
@@ -187,7 +187,7 @@ shots:
 
 | 任务 | 内容 | 人工 |
 |---|---|---|
-| T3.1 新资产 | 雨夜站厅空场、等候牌、两杯热饮道具；林夏、周远的雨夜服装版（沿用四视图格式）；更新 `project.yaml` 版本号 | 生成由用户操作，agent 写提示词并检查一致性 |
+| T3.1 新资产 | 雨夜站厅空场、等候牌、两杯热饮道具；林夏、周远的雨夜服装版（沿用四视图格式）；更新 `project.yaml` 版本号 | 由用户或已授权 agent 生成，用户审片 |
 | T3.2 镜头清单 | 把 11–17 镜按机位拆进 `shots.yaml`。15–16 镜按导演稿补回两张同车次的票和“你想什么时候走？” | 否 |
 | T3.3 生成、粗剪、审片 | 流程同 T1.2–T1.4 | 是 |
 
@@ -199,7 +199,7 @@ shots:
 
 | 任务 | 内容 | 人工 |
 |---|---|---|
-| T4.1 剩余场景资产 | 旧站台、当代站台、小画室、海岸、海边礼堂空场；童年林夏和童年周远参考；车票、信封、火漆等道具 | 生成由用户操作 |
+| T4.1 剩余场景资产 | 旧站台、当代站台、小画室、海岸、海边礼堂空场；童年林夏和童年周远参考；车票、信封、火漆等道具 | 由用户或已授权 agent 生成 |
 | T4.2 全片镜头清单 | 01–24 镜全部写入 `shots.yaml`。童年段压缩为画本、纸飞机等短动作。第 18 镜沿用已认可的海边追信原片，先核对服装、信封和手位 | 否 |
 | T4.3 逐场生成与补拍 | 按场推进，每场通过再进下一场 | 是 |
 | T4.4 后期 | 对白、环境、拟音、音乐分轨混音；调色统一；字幕。先拍齐再定总长，不硬凑 180 秒 | 混音与调色的审美判断需人工 |
@@ -227,7 +227,7 @@ T2.1 ─┬─ T2.2 ─┐
       ├─ T2.3 ─┼─ T2.5
       └─ T1.1  │
 T2.4           │
-T1.1 → T1.2(人工) → T1.3(需 T2.2、T2.3) → T1.4(人工) → M3 → M4
+T1.1 → T1.2(授权生成) → T1.3(需 T2.2、T2.3) → T1.4(人工) → M3 → M4
 ```
 
 可以立即并行领取：T2.1、T2.4。T2.1 合入后可以并行：T2.2、T2.3、T1.1。
