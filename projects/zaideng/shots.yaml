@@ -1,93 +1,79 @@
-{
-  "schema_version": 1,
-  "shots": [
-    {
-      "id": "15a",
-      "scene": "次日咖啡角",
-      "camera": "A",
-      "target_duration": 2,
-      "action": "周远推茶，林夏看向杯子",
-      "dialogue": [],
-      "refs": [
-        "lin",
-        "zhou",
-        "cafe",
-        "shot-A"
-      ],
-      "kind": "performance",
-      "status": "pending",
-      "candidates": [],
-      "selected": null
-    },
-    {
-      "id": "15b",
-      "scene": "次日咖啡角",
-      "camera": "B",
-      "target_duration": 5,
-      "action": "周远道歉，林夏闭口倾听",
-      "dialogue": [
-        {
-          "speaker": "zhou",
-          "at": 0.3,
-          "end": 4.8,
-          "text": "昨天让你白等了。以后来不了，我先告诉你。"
-        }
-      ],
-      "refs": [
-        "lin",
-        "zhou",
-        "cafe",
-        "shot-B"
-      ],
-      "kind": "performance",
-      "status": "pending",
-      "candidates": [],
-      "selected": null,
-      "listener": "lin"
-    },
-    {
-      "id": "15c",
-      "scene": "次日咖啡角",
-      "camera": "C",
-      "target_duration": 4,
-      "action": "林夏抬眼回应，周远闭口倾听",
-      "dialogue": [
-        {
-          "speaker": "lin",
-          "at": 0.3,
-          "end": 3.8,
-          "text": "茶喝完再走。"
-        }
-      ],
-      "refs": [
-        "lin",
-        "zhou",
-        "cafe",
-        "shot-C"
-      ],
-      "kind": "performance",
-      "status": "pending",
-      "candidates": [],
-      "selected": null,
-      "listener": "zhou"
-    },
-    {
-      "id": "15d",
-      "scene": "次日咖啡角",
-      "camera": "A",
-      "target_duration": 4,
-      "action": "两人微笑碰杯",
-      "dialogue": [],
-      "refs": [
-        "lin",
-        "zhou",
-        "cafe",
-        "shot-A"
-      ],
-      "kind": "performance",
-      "status": "pending",
-      "candidates": [],
-      "selected": null
-    }
-  ]
-}
+schema_version: 1
+shots:
+  - id: "15a"
+    scene: 次日咖啡角
+    camera: A
+    target_duration: 2.0
+    action: 周远推茶，林夏顺着杯子看过去
+    sound: 咖啡角安静室内底声，木桌推杯轻响
+    dialogue: []
+    refs:
+      - lin
+      - zhou
+      - cafe
+      - shot-A
+    kind: performance
+    status: pending
+    candidates: []
+    selected: null
+
+  - id: "15b"
+    scene: 次日咖啡角
+    camera: B
+    target_duration: 5.0
+    action: 周远道歉，林夏闭口倾听
+    sound: 咖啡角安静室内底声，周远自然同期人声
+    dialogue:
+      - speaker: zhou
+        at: 0.3
+        end: 4.8
+        text: 昨天让你白等了。以后来不了，我先告诉你。
+    listener: lin
+    refs:
+      - lin
+      - zhou
+      - cafe
+      - shot-B
+    kind: performance
+    status: pending
+    candidates: []
+    selected: null
+
+  - id: "15c"
+    scene: 次日咖啡角
+    camera: C
+    target_duration: 4.0
+    action: 林夏先看杯子再抬眼回应，周远闭口倾听
+    sound: 咖啡角安静室内底声，林夏轻声同期人声
+    dialogue:
+      - speaker: lin
+        at: 1.0
+        end: 3.2
+        text: 茶喝完再走。
+    listener: zhou
+    refs:
+      - lin
+      - zhou
+      - cafe
+      - shot-C
+    kind: performance
+    status: pending
+    candidates: []
+    selected: null
+
+  - id: "15d"
+    scene: 次日咖啡角
+    camera: A
+    target_duration: 4.0
+    action: 两人微笑并碰杯
+    sound: 保留房间底声和碰杯拟音
+    dialogue: []
+    refs:
+      - lin
+      - zhou
+      - cafe
+      - shot-A
+    kind: performance
+    status: pending
+    candidates: []
+    selected: null
